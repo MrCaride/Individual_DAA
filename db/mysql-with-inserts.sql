@@ -27,6 +27,10 @@ INSERT INTO `daaexample`.`people` (`id`,`name`,`surname`) VALUES (0,'María','Nu
 INSERT INTO `daaexample`.`people` (`id`,`name`,`surname`) VALUES (0,'Alba','Fernández');
 INSERT INTO `daaexample`.`people` (`id`,`name`,`surname`) VALUES (0,'Asunción','Jiménez');
 
+INSERT INTO `daaexample`. `pets` (`petId`, `name`, `type `, `ownerId`) VALUES ('1', 'Firulais', 'Dog', 0);
+INSERT INTO `daaexample`. `pets` (`petId`, `name`, `type `, `ownerId`) VALUES ('2', 'Miauntoya', 'Cat', 1);
+INSERT INTO `daaexample`. `pets` (`petId` ,` name`, `type `, `ownerId`) VALUES ('3', 'Piolin', 'Bird', 1);
+
 -- The password for each user is its login suffixed with "pass". For example, user "admin" has the password "adminpass".
 INSERT INTO `daaexample`.`users` (`login`,`password`,`role`)
 VALUES ('admin', '713bfda78870bf9d1b261f565286f85e97ee614efe5f0faf7c34e7ca4f65baca','ADMIN');

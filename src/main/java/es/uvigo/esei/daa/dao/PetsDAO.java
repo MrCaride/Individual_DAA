@@ -18,15 +18,25 @@ import es.uvigo.esei.daa.entities.Pet;
  */
 public class PetsDAO extends DAO {
     private final static Logger LOG = Logger.getLogger(PetsDAO.class.getName());
-    
-    public Pet get(String petId) throws DAOException, IllegalArgumentException {
-        try (final Connection conn = this.getConnection()) {
-            final String query = "SELECT * FROM pets WHERE pet_id=?";
-            
-            try (final PreparedStatement statement = conn.prepareStatement(query)) {
+
+    private boolean ownerExists(int ownerId) throws SQLException {
+        try (Connection conn = this.getConnection()) {
+            String query = "SELECT 1 FROM people WHERE id = ?";
+            try (PreparedStatement statement = conn.prepareStatement(query)) {
+                statement.setInt(1, ownerId);
+                try (ResultSet result = statement.executeQuery()) {
+                    return result.next();
+                }
+            }
+        }
+    }
+
+    public Pet get(String petId) throws DAOException {
+        try (Connection conn = this.getConnection()) {
+            String query = "SELECT * FROM pets WHERE pet_id = ?";
+            try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, petId);
-                
-                try (final ResultSet result = statement.executeQuery()) {
+                try (ResultSet result = statement.executeQuery()) {
                     if (result.next()) {
                         return rowToEntity(result);
                     } else {
@@ -39,36 +49,35 @@ public class PetsDAO extends DAO {
             throw new DAOException(e);
         }
     }
-    
+
     public List<Pet> list() throws DAOException {
-        try (final Connection conn = this.getConnection()) {
-            final String query = "SELECT * FROM pets";
-            
-            try (final PreparedStatement statement = conn.prepareStatement(query)) {
-                try (final ResultSet result = statement.executeQuery()) {
-                    final List<Pet> pets = new LinkedList<>();
-                    
-                    while (result.next()) {
-                        pets.add(rowToEntity(result));
-                    }
-                    
-                    return pets;
+        try (Connection conn = this.getConnection()) {
+            String query = "SELECT * FROM pets";
+            try (PreparedStatement statement = conn.prepareStatement(query);
+                 ResultSet result = statement.executeQuery()) {
+                List<Pet> pets = new LinkedList<>();
+                while (result.next()) {
+                    pets.add(rowToEntity(result));
                 }
+                return pets;
             }
         } catch (SQLException e) {
             LOG.log(Level.SEVERE, "Error listing pets", e);
             throw new DAOException(e);
         }
     }
-    
-    public Pet add(String petId, String name, String type, int ownerId) throws DAOException, IllegalArgumentException {
+
+    public Pet add(String petId, String name, String type, int ownerId) throws DAOException {
         if (petId == null || name == null || type == null) {
             throw new IllegalArgumentException("petId, name, and type can't be null");
         }
-        
+
         try (Connection conn = this.getConnection()) {
-            final String query = "INSERT INTO pets (pet_id, name, type, owner_id) VALUES(?, ?, ?, ?)";
+            if (!ownerExists(ownerId)) {
+                throw new IllegalArgumentException("Owner ID does not exist");
+            }
             
+            String query = "INSERT INTO pets (pet_id, name, type, owner_id) VALUES (?, ?, ?, ?)";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, petId);
                 statement.setString(2, name);
@@ -86,15 +95,18 @@ public class PetsDAO extends DAO {
             throw new DAOException(e);
         }
     }
-    
-    public void modify(Pet pet) throws DAOException, IllegalArgumentException {
+
+    public void modify(Pet pet) throws DAOException {
         if (pet == null) {
-            throw new IllegalArgumentException("pet can't be null");
+            throw new IllegalArgumentException("Pet can't be null");
         }
-        
+
         try (Connection conn = this.getConnection()) {
-            final String query = "UPDATE pets SET name=?, type=?, owner_id=? WHERE pet_id=?";
-            
+            if (!ownerExists(pet.getOwnerId())) {
+                throw new IllegalArgumentException("Owner ID does not exist");
+            }
+
+            String query = "UPDATE pets SET name = ?, type = ?, owner_id = ? WHERE pet_id = ?";
             try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, pet.getName());
                 statement.setString(2, pet.getType());
@@ -110,12 +122,11 @@ public class PetsDAO extends DAO {
             throw new DAOException(e);
         }
     }
-    
-    public void delete(String petId) throws DAOException, IllegalArgumentException {
-        try (final Connection conn = this.getConnection()) {
-            final String query = "DELETE FROM pets WHERE pet_id=?";
-            
-            try (final PreparedStatement statement = conn.prepareStatement(query)) {
+
+    public void delete(String petId) throws DAOException {
+        try (Connection conn = this.getConnection()) {
+            String query = "DELETE FROM pets WHERE pet_id = ?";
+            try (PreparedStatement statement = conn.prepareStatement(query)) {
                 statement.setString(1, petId);
                 
                 if (statement.executeUpdate() != 1) {
@@ -127,7 +138,7 @@ public class PetsDAO extends DAO {
             throw new DAOException(e);
         }
     }
-    
+
     private Pet rowToEntity(ResultSet row) throws SQLException {
         return new Pet(
             row.getString("pet_id"),
