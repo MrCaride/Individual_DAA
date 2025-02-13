@@ -15,5 +15,14 @@ CREATE TABLE `daaexample`.`users` (
 	PRIMARY KEY (`login`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `daaexample`.`pets` (
+	`pet_id` varchar(100) NOT NULL,
+	`name` varchar(64) NOT NULL,
+	`type` varchar(10) NOT NULL,
+	`id` int,
+	PRIMARY KEY (`pet_id`),
+	FOREIGN KEY (`id`) REFERENCES `people`(`id`) 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE USER IF NOT EXISTS 'daa'@'localhost' IDENTIFIED WITH mysql_native_password BY 'daa';
 GRANT ALL ON `daaexample`.* TO 'daa'@'localhost';
